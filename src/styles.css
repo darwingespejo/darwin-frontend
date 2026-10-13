@@ -54,6 +54,8 @@ button { cursor: pointer; }
 .button-secondary:hover { background: #f7f7fa; }
 .button-wide { width: 100%; margin-top: 25px; min-height: 45px; justify-content: space-between; padding: 0 15px; }
 .login-note { margin-top: 24px; text-align: center; color: #9ba1ac; font-size: 10px; }
+.auth-mode-button { border: 0; padding: 0; color: #24547c; background: transparent; font-size: inherit; font-weight: 700; }
+.auth-mode-button:hover { text-decoration: underline; }
 .login-footer { position: absolute; bottom: 29px; color: #9ca2af; font-size: 9px; letter-spacing: 1.4px; }
 .login-footer span { margin: 0 6px; color: #a99ef4; }
 

@@ -13,16 +13,18 @@ backend environment and must never be added here.
 
 From this directory, copy `.env.example` to `.env.local` and set
 `VITE_API_BASE_URL` to the API origin (without a trailing slash). The example
-uses `http://127.0.0.1:3000` for the local LavaLust development server.
+uses `http://localhost/LavaLustLab6` for the local XAMPP Apache application.
 
 ```powershell
 npm ci
 npm run dev
 ```
 
-Open the URL printed by Vite. Sign in with a user already created in the API
-database. For cross-origin local development, configure the backend
-`CORS_ALLOWED_ORIGINS` to match Vite's origin exactly.
+Open the URL printed by Vite. Create an account or sign in; registrations are
+stored in the API database with the standard `user` role. The inventory shown
+after sign-in is loaded from the API database, and product create, update, and
+delete actions are persisted there. For cross-origin local development,
+configure the backend `CORS_ALLOWED_ORIGINS` to match Vite's origin exactly.
 
 ## Production build
 

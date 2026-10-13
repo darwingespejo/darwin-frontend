@@ -28,7 +28,7 @@ async function apiRequest(path, options = {}, retried = false) {
   if (options.body && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
-  if (auth?.tokens?.access_token && path !== "/api/auth/login" && path !== "/api/auth/refresh") {
+  if (auth?.tokens?.access_token && path !== "/api/auth/login" && path !== "/api/auth/register" && path !== "/api/auth/refresh") {
     headers.set("Authorization", `Bearer ${auth.tokens.access_token}`);
   }
 
@@ -84,6 +84,7 @@ function App() {
   const [editor, setEditor] = useState(null);
   const [saving, setSaving] = useState(false);
   const [signingIn, setSigningIn] = useState(false);
+  const [authMode, setAuthMode] = useState("login");
 
   async function loadProducts() {
     const result = await apiRequest("/api/products");
@@ -128,18 +129,25 @@ function App() {
     0,
   );
 
-  async function handleLogin(event) {
+  async function handleAuthSubmit(event) {
     event.preventDefault();
     setSigningIn(true);
     setPageError("");
     const form = new FormData(event.currentTarget);
+    const registering = authMode === "register";
     try {
-      const result = await apiRequest("/api/auth/login", {
+      const result = await apiRequest(registering ? "/api/auth/register" : "/api/auth/login", {
         method: "POST",
-        body: JSON.stringify({
-          identity: form.get("identity"),
-          password: form.get("password"),
-        }),
+        body: JSON.stringify(registering
+          ? {
+              username: form.get("username"),
+              email: form.get("email"),
+              password: form.get("password"),
+            }
+          : {
+              identity: form.get("identity"),
+              password: form.get("password"),
+            }),
       });
       const nextAuth = { user: result.user, tokens: result.tokens };
       saveAuth(nextAuth);
@@ -148,7 +156,9 @@ function App() {
       setLoading(true);
       const productResult = await apiRequest("/api/products");
       setProducts(productResult.data);
-      setNotice("Welcome back. Your inventory is ready.");
+      setNotice(registering
+        ? "Your account is ready. The inventory is loaded from the database."
+        : "Welcome back. Your inventory is ready.");
     } catch (error) {
       setPageError(error.message);
       if (!readAuth()) setAuth(null);
@@ -233,20 +243,38 @@ function App() {
         </section>
         <section className="login-panel">
           <div className="login-card">
-            <span className="eyebrow">INSTITUTIONAL ACCESS</span>
-            <h2>Campus Inventory System</h2>
-            <p className="muted">Sign in with your authorized school account.</p>
+            <span className="eyebrow">{authMode === "register" ? "CREATE YOUR ACCOUNT" : "INSTITUTIONAL ACCESS"}</span>
+            <h2>{authMode === "register" ? "Join Campus Inventory" : "Campus Inventory System"}</h2>
+            <p className="muted">{authMode === "register"
+              ? "Create an account to access and manage campus inventory."
+              : "Sign in with your school account."}</p>
             {pageError && <div className="alert alert-error" role="alert">{pageError}</div>}
-            <form className="login-form" onSubmit={handleLogin}>
-              <label htmlFor="identity">School account</label>
-              <input autoComplete="username" id="identity" name="identity" placeholder="Username or school email" required />
+            <form className="login-form" onSubmit={handleAuthSubmit}>
+              {authMode === "register" ? (
+                <>
+                  <label htmlFor="username">Username</label>
+                  <input autoComplete="username" id="username" maxLength="100" minLength="3" name="username" placeholder="Choose a username" required />
+                  <label htmlFor="email">School email</label>
+                  <input autoComplete="email" id="email" maxLength="255" name="email" placeholder="you@school.edu" required type="email" />
+                </>
+              ) : (
+                <>
+                  <label htmlFor="identity">School account</label>
+                  <input autoComplete="username" id="identity" name="identity" placeholder="Username or school email" required />
+                </>
+              )}
               <label htmlFor="password">Password</label>
-              <input autoComplete="current-password" id="password" name="password" placeholder="Enter your password" required type="password" />
+              <input autoComplete={authMode === "register" ? "new-password" : "current-password"} id="password" maxLength={authMode === "register" ? 72 : undefined} minLength={authMode === "register" ? 8 : undefined} name="password" placeholder={authMode === "register" ? "8-72 bytes" : "Enter your password"} required type="password" />
               <button className="button button-primary button-wide" disabled={signingIn} type="submit">
-                {signingIn ? "Signing in…" : "Sign in"} <span aria-hidden="true">→</span>
+                {signingIn ? (authMode === "register" ? "Creating account…" : "Signing in…") : (authMode === "register" ? "Create account" : "Sign in")} <span aria-hidden="true">→</span>
               </button>
             </form>
-            <p className="login-note">Authorized personnel only · Contact your system administrator for access.</p>
+            <p className="login-note">
+              {authMode === "register" ? "Already registered? " : "New to Campus Inventory? "}
+              <button className="auth-mode-button" onClick={() => { setAuthMode(authMode === "register" ? "login" : "register"); setPageError(""); }} type="button">
+                {authMode === "register" ? "Sign in" : "Create an account"}
+              </button>
+            </p>
           </div>
           <div className="login-footer">CAMPUS OPERATIONS <span>·</span> INVENTORY MANAGEMENT</div>
         </section>
